@@ -50,7 +50,7 @@ SOFTWARE.
 
 // Define this in config.h
 #ifndef VISUALIZER_THREAD_PRIORITY
-#define "Visualizer thread priority not defined"
+#error "Visualizer thread priority not defined"
 #endif
 
 
@@ -227,8 +227,8 @@ bool keyframe_set_backlight_color(keyframe_animation_t* animation, visualizer_st
 #ifdef LCD_ENABLE
 bool keyframe_display_layer_text(keyframe_animation_t* animation, visualizer_state_t* state) {
     (void)animation;
-    gdispClear(White);
-    gdispDrawString(0, 10, state->layer_text, state->font_dejavusansbold12, Black);
+    gdispClear(Black);
+    gdispDrawString(0, 10, state->layer_text, state->font_normal, White);
     gdispFlush();
     return false;
 }
@@ -262,12 +262,12 @@ bool keyframe_display_layer_bitmap(keyframe_animation_t* animation, visualizer_s
     (void)animation;
     const char* layer_help = "1=On D=Default B=Both";
     char layer_buffer[16 + 4]; // 3 spaces and one null terminator
-    gdispClear(White);
-    gdispDrawString(0, 0, layer_help, state->font_fixed5x8, Black);
+    gdispClear(Black);
+    gdispDrawString(0, 0, layer_help, state->font_small, White);
     format_layer_bitmap_string(state->status.default_layer, state->status.layer, layer_buffer);
-    gdispDrawString(0, 10, layer_buffer, state->font_fixed5x8, Black);
+    gdispDrawString(0, 10, layer_buffer, state->font_small, White);
     format_layer_bitmap_string(state->status.default_layer >> 16, state->status.layer >> 16, layer_buffer);
-    gdispDrawString(0, 20, layer_buffer, state->font_fixed5x8, Black);
+    gdispDrawString(0, 20, layer_buffer, state->font_small, White);
     gdispFlush();
     return false;
 }
@@ -306,6 +306,7 @@ bool enable_visualization(keyframe_animation_t* animation, visualizer_state_t* s
 static THD_WORKING_AREA(visualizerThreadStack, 1024);
 static THD_FUNCTION(visualizerThread, arg) {
     (void)arg;
+    chRegSetThreadName("visualizer");
 
     event_listener_t event_listener;
     chEvtRegister(&layer_changed_event, &event_listener, 0);
@@ -321,8 +322,8 @@ static THD_FUNCTION(visualizerThread, arg) {
         .status = initial_status,
         .current_lcd_color = 0,
 #ifdef LCD_ENABLE
-        .font_fixed5x8 = gdispOpenFont("fixed_5x8"),
-        .font_dejavusansbold12 = gdispOpenFont("DejaVuSansBold12")
+        .font_small= gdispOpenFont("fixed_5x8"),
+        .font_normal = gdispOpenFont("fixed_7x14")
 #endif
     };
     initialize_user_visualizer(&state);
@@ -394,8 +395,8 @@ static THD_FUNCTION(visualizerThread, arg) {
         chEvtWaitOneTimeout(EVENT_MASK(0), sleep_time);
     }
 #ifdef LCD_ENABLE
-    gdispCloseFont(state.font_fixed5x8);
-    gdispCloseFont(state.font_dejavusansbold12);
+    gdispCloseFont(state.font_small);
+    gdispCloseFont(state.font_normal);
 #endif
 }
 
